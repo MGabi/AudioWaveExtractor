@@ -1,0 +1,7 @@
+.idea
+.idea/*
+*.wav
+audioFiles/*
+audioFiles
+output/*
+output
