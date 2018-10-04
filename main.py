@@ -15,41 +15,44 @@ from scipy.io import wavfile
 
 outputFile = open("output/audioWaveHeights.txt", "w+")
 index = 1
-nrOfWaves = 10000
+nrOfWaves = 5000
+
 
 def sigmoid(x):
-  return 1 / (1 + math.exp(x))
+    return 1 / (1 + math.exp(x))
 
-def avgOf(l):
+
+def avg_of(l):
     sum = 0
     for elem in l:
         sum += elem
     return sum / size(l)
 
 
-def mapInterval(audioData):
-    minReduce = 0.0
-    maxReduce = 1.0
-    for i in range(size(audioData)):
-        # audioData[i] = erf(audioData[i])
-        # audioData[i] = arctan(audioData[i])
-        audioData[i] = np.interp(audioData[i], [min(audioData), max(audioData)], [0.0, 1.0])
-        if audioData[i] >= maxReduce:
-            audioData[i] = maxReduce
-        if audioData[i] <= minReduce:
-            audioData[i] = minReduce
-        audioData[i] = np.interp(audioData[i], [minReduce, maxReduce], [0.0, 1.0])
+def map_interval(audioData):
+    min_reduce = 0.35
+    max_reduce = 1.0
+    # for i in range(size(audioData)):
+    #     audioData[i] = np.interp(audioData[i], [min(audioData), max(audioData)], [0.0, 1.0])
+        # if audioData[i] >= max_reduce:
+        #     audioData[i] = max_reduce
+        # if audioData[i] <= min_reduce:
+        #     audioData[i] = min_reduce
 
-def saveWaves(file_name, time, audioData):
+    for i in range(size(audioData) - 1):
+        audioData[i] = abs(audioData[i] - audioData[i+1])
+
+    # for i in range(size(audioData)):
+    #     audioData[i] = np.interp(audioData[i], [min(audioData), max(audioData)], [0.0, 1.0])
+    #
+    for i in range(size(audioData)):
+        audioData[i] = round(np.interp(audioData[i], [min(audioData), max(audioData)], [min_reduce, max_reduce]), 5)
+
+
+def save_waves(file_name, time, audioData):
     global index
     plt.figure(index)
     plt.subplot(211)
-    # for i in range(size(time)):
-    #     plt.plot(time[i], audioData[i], 'bo', markersize=0.5)
-    # plt.plot(time, audioData, linewidth=0.8, alpha=0.7, color='#ff7f00')
-    for i in range(time.size):
-        audioData[i] = 1.0 - audioData[i]
-    audioData = [round(val, 3) for val in audioData]
     plt.plot(time, audioData, linewidth=0.8, alpha=0.7, color='#ff7f00')
     plt.xlabel('Time (s)')
     plt.ylabel('Amplitude')
@@ -65,7 +68,7 @@ def saveWaves(file_name, time, audioData):
                 dpi=300)
 
 
-def processSignal(audioFileName):
+def process_signal(audioFileName):
     rate, audData = wavfile.read(audioFileName)
 
     channel = audData[:, 0]
@@ -76,13 +79,11 @@ def processSignal(audioFileName):
         # audioData.append(avgOf(channel[i:i+factor]))
         audioData.append(channel[i])
 
-    mapInterval(audioData)
-    audioData = [round(val, 3) for val in audioData]
-    saveWaves(audioFileName, timeLine, audioData)
+    map_interval(audioData)
+    save_waves(audioFileName, timeLine, audioData)
 
 
 for fileName in Path("audioFiles//").glob("*.wav"):
-    processSignal(str(fileName))
-    break
+    process_signal(str(fileName))
 
 outputFile.close()
